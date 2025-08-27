@@ -4,93 +4,420 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Візуалізатор систем лінійних рівнянь</title>
-
-  <!-- Стилі -->
-  <link rel="stylesheet" href="./src/styles.css">
-
-  <!-- Бібліотеки -->
-  <script src="./libs/aframe.min.js"></script>
-  <script src="./libs/three.min.js"></script>
-  <script src="./libs/mindar-image-aframe.prod.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      display: flex;
+      height: 100vh;
+    }
+    .control-panel {
+      width: 420px;
+      padding: 20px;
+      background: rgba(0,0,0,0.8);
+      overflow-y: auto;
+    }
+    .title {
+      font-size: 22px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .section {
+      margin-bottom: 20px;
+      padding: 10px;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 10px;
+    }
+    .equation-inputs {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .equation-inputs input {
+      width: 50px;
+      margin: 0 5px;
+      text-align: center;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 8px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: linear-gradient(45deg,#ff6b6b,#ffd93d);
+      color: white;
+      font-weight: bold;
+    }
+    .method-tabs {
+      display: flex;
+      margin-bottom: 10px;
+    }
+    .method-tab {
+      flex: 1;
+      padding: 8px;
+      cursor: pointer;
+      background: rgba(255,255,255,0.1);
+      border: none;
+    }
+    .method-tab.active {
+      background: rgba(255,255,255,0.3);
+    }
+    #solution-display, #solution-display-3 {
+      margin-top: 10px;
+      font-size: 15px;
+    }
+    .steps {
+      margin-top: 10px;
+      font-size: 13px;
+      background: rgba(255,255,255,0.1);
+      padding: 8px;
+      border-radius: 6px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    table.matrix {
+      border-collapse: collapse;
+      margin: 4px 0;
+    }
+    table.matrix td {
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 2px 6px;
+      text-align: center;
+    }
+    .visualization {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    #plot {
+      flex: 1;
+    }
+    #plot3d {
+      flex: 1;
+    }
+  </style>
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
-  <div class="container">
-    <div class="control-panel">
-      <div class="title">Системи лінійних рівнянь</div>
-
-      <!-- 2x2 система -->
-      <div class="section">
-        <h3>Система 2×2</h3>
-        <div class="equation-inputs">
-          <input type="number" id="a11" value="2" step="0.1">
-          <span>x +</span>
-          <input type="number" id="a12" value="3" step="0.1">
-          <span>y =</span>
-          <input type="number" id="b1" value="6" step="0.1">
-        </div>
-        <div class="equation-inputs">
-          <input type="number" id="a21" value="1" step="0.1">
-          <span>x +</span>
-          <input type="number" id="a22" value="-1" step="0.1">
-          <span>y =</span>
-          <input type="number" id="b2" value="1" step="0.1">
-        </div>
-
-        <div class="method-tabs">
-          <button class="method-tab active" onclick="setMethod(event, 'gauss')">Гаусса</button>
-          <button class="method-tab" onclick="setMethod(event, 'cramer')">Крамера</button>
-        </div>
-
-        <button onclick="solveSystem()">Розв'язати систему</button>
-        <button onclick="visualize2D()">Візуалізувати 2D</button>
-
-        <div id="solution-display"></div>
+  <div class="control-panel">
+    <div class="title">Система 2×2</div>
+    <div class="section">
+      <div class="equation-inputs">
+        <input type="number" id="a11" value="2"><span>x +</span>
+        <input type="number" id="a12" value="3"><span>y =</span>
+        <input type="number" id="b1" value="6">
+      </div>
+      <div class="equation-inputs">
+        <input type="number" id="a21" value="1"><span>x +</span>
+        <input type="number" id="a22" value="-1"><span>y =</span>
+        <input type="number" id="b2" value="1">
       </div>
 
-      <!-- 3x3 система -->
-      <div class="section">
-        <h3>Система 3×3</h3>
-        <div class="equation-inputs">
-          <input type="number" id="a11_3d" value="1" step="0.1"><span>x +</span>
-          <input type="number" id="a12_3d" value="2" step="0.1"><span>y +</span>
-          <input type="number" id="a13_3d" value="1" step="0.1"><span>z =</span>
-          <input type="number" id="b1_3d" value="4" step="0.1">
-        </div>
-        <div class="equation-inputs">
-          <input type="number" id="a21_3d" value="2" step="0.1"><span>x +</span>
-          <input type="number" id="a22_3d" value="1" step="0.1"><span>y +</span>
-          <input type="number" id="a23_3d" value="1" step="0.1"><span>z =</span>
-          <input type="number" id="b2_3d" value="3" step="0.1">
-        </div>
-        <div class="equation-inputs">
-          <input type="number" id="a31_3d" value="1" step="0.1"><span>x +</span>
-          <input type="number" id="a32_3d" value="1" step="0.1"><span>y +</span>
-          <input type="number" id="a33_3d" value="2" step="0.1"><span>z =</span>
-          <input type="number" id="b3_3d" value="5" step="0.1">
-        </div>
-
-        <button onclick="solve3DSystem()">Розв'язати 3D систему</button>
-        <button onclick="visualize3D()">Візуалізувати 3D</button>
+      <div class="method-tabs">
+        <button class="method-tab active" onclick="setMethod(this,'gauss')">Гаусса</button>
+        <button class="method-tab" onclick="setMethod(this,'cramer')">Крамера</button>
       </div>
+
+      <button onclick="solveSystem2()">Розв'язати систему</button>
+      <button onclick="visualize2D()">Візуалізувати 2D</button>
+
+      <div id="solution-display"></div>
+      <div id="steps-display" class="steps"></div>
     </div>
 
-    <!-- Візуалізація -->
-    <div class="visualization">
-      <div id="plot"></div>
-
-      <!-- AR-сцена -->
-      <div class="ar-container">
-        <a-scene mindar-image="imageTargetSrc: ./assets/markers/example.mind;" embedded>
-          <a-camera position="0 0 5"></a-camera>
-          <a-entity id="ar-planes"></a-entity>
-          <a-sphere id="solution-point" radius="0.3" color="yellow" visible="false"></a-sphere>
-        </a-scene>
+    <div class="title">Система 3×3</div>
+    <div class="section">
+      <div class="equation-inputs">
+        <input type="number" id="a11_3" value="1"><span>x +</span>
+        <input type="number" id="a12_3" value="2"><span>y +</span>
+        <input type="number" id="a13_3" value="3"><span>z =</span>
+        <input type="number" id="b1_3" value="14">
       </div>
+      <div class="equation-inputs">
+        <input type="number" id="a21_3" value="2"><span>x +</span>
+        <input type="number" id="a22_3" value="3"><span>y +</span>
+        <input type="number" id="a23_3" value="4"><span>z =</span>
+        <input type="number" id="b2_3" value="20">
+      </div>
+      <div class="equation-inputs">
+        <input type="number" id="a31_3" value="3"><span>x +</span>
+        <input type="number" id="a32_3" value="4"><span>y +</span>
+        <input type="number" id="a33_3" value="5"><span>z =</span>
+        <input type="number" id="b3_3" value="26">
+      </div>
+
+      <button onclick="solveSystem3()">Розв'язати 3×3</button>
+      <button onclick="visualize3D()">Візуалізувати 3D</button>
+      <div id="solution-display-3"></div>
+      <div id="steps-display-3" class="steps"></div>
     </div>
   </div>
 
-  <!-- JS код -->
-  <script src="./src/app.js"></script>
+  <div class="visualization">
+    <div id="plot"></div>
+    <div id="plot3d"></div>
+  </div>
+
+<script>
+let currentMethod = 'gauss';
+let lastSolution2D = null;
+let lastSolution3D = null;
+let lastCoefficients3D = null;
+
+function setMethod(elem, method){
+  currentMethod = method;
+  document.querySelectorAll('.method-tab').forEach(tab => tab.classList.remove('active'));
+  elem.classList.add('active');
+}
+
+// допоміжні
+function determinant(m){
+  const n=m.length;
+  if(n===2) return m[0][0]*m[1][1]-m[0][1]*m[1][0];
+  let det=0;
+  for(let i=0;i<n;i++){
+    const minor=m.slice(1).map(row=>row.filter((_,j)=>j!==i));
+    det+=(i%2===0?1:-1)*m[0][i]*determinant(minor);
+  }
+  return det;
+}
+function formatMatrix(matrix){
+  let html="<table class='matrix'>";
+  for(let row of matrix){
+    html+="<tr>"+row.map(x=>`<td>${(Math.abs(x)<1e-10?0:x).toFixed(2)}</td>`).join("")+"</tr>";
+  }
+  html+="</table>";
+  return html;
+}
+
+// 2×2
+function gaussianEliminationSteps(matrix) {
+  const steps = [];
+  const n = matrix.length;
+
+  for (let i=0;i<n;i++){
+    let maxRow=i;
+    for(let k=i+1;k<n;k++){
+      if(Math.abs(matrix[k][i])>Math.abs(matrix[maxRow][i])) maxRow=k;
+    }
+    [matrix[i],matrix[maxRow]]=[matrix[maxRow],matrix[i]];
+    steps.push(`Переставили рядки ${i+1} і ${maxRow+1}: ${formatMatrix(matrix)}`);
+
+    let pivot=matrix[i][i];
+    if(Math.abs(pivot)<1e-10) return {error:"Система не має єдиного розв'язку"};
+
+    for(let j=i;j<=n;j++) matrix[i][j]/=pivot;
+    steps.push(`Поділили рядок ${i+1} на ${pivot.toFixed(2)}: ${formatMatrix(matrix)}`);
+
+    for(let k=i+1;k<n;k++){
+      let factor=matrix[k][i];
+      for(let j=i;j<=n;j++) matrix[k][j]-=factor*matrix[i][j];
+      steps.push(`Відняли ${factor.toFixed(2)}*R${i+1} від R${k+1}: ${formatMatrix(matrix)}`);
+    }
+  }
+
+  const solution=new Array(n);
+  for(let i=n-1;i>=0;i--){
+    solution[i]=matrix[i][n];
+    for(let j=i+1;j<n;j++) solution[i]-=matrix[i][j]*solution[j];
+  }
+  steps.push(`Зворотній хід → x = ${solution.map(x=>x.toFixed(2))}`);
+  return {solution,steps};
+}
+
+function cramersRuleSteps(coefficients,constants){
+  const steps=[];
+  const det=determinant(coefficients);
+  steps.push(`det(A)=${det.toFixed(2)}`);
+  if(Math.abs(det)<1e-10) return {error:"Визначник=0"};
+
+  const n=coefficients.length;
+  const solution=[];
+  for(let i=0;i<n;i++){
+    const modified=coefficients.map(r=>[...r]);
+    for(let j=0;j<n;j++) modified[j][i]=constants[j];
+    const d=determinant(modified);
+    steps.push(`det(A${i+1})=${d.toFixed(2)} → x${i+1}=${(d/det).toFixed(2)}`);
+    solution.push(d/det);
+  }
+  return {solution,steps};
+}
+
+function solveSystem2(){
+  const a11=+document.getElementById('a11').value;
+  const a12=+document.getElementById('a12').value;
+  const a21=+document.getElementById('a21').value;
+  const a22=+document.getElementById('a22').value;
+  const b1=+document.getElementById('b1').value;
+  const b2=+document.getElementById('b2').value;
+
+  let result;
+  if(currentMethod==='gauss'){
+    result=gaussianEliminationSteps([[a11,a12,b1],[a21,a22,b2]]);
+  } else {
+    result=cramersRuleSteps([[a11,a12],[a21,a22]],[b1,b2]);
+  }
+
+  const out=document.getElementById('solution-display');
+  const stepsDiv=document.getElementById('steps-display');
+
+  if(result.error){
+    out.innerHTML=`<p style="color:red">${result.error}</p>`;
+    stepsDiv.innerHTML='';
+    lastSolution2D = null;
+  } else {
+    out.innerHTML=`<p><b>Розв'язок:</b> x=${result.solution[0].toFixed(2)}, y=${result.solution[1].toFixed(2)}</p>`;
+    stepsDiv.innerHTML=`<h4>Покрокове розв'язання:</h4>`+
+      result.steps.map(s=>`<div>${s}</div>`).join('');
+    lastSolution2D = result.solution;
+  }
+}
+
+function visualize2D(){
+  const a11=+document.getElementById('a11').value;
+  const a12=+document.getElementById('a12').value;
+  const a21=+document.getElementById('a21').value;
+  const a22=+document.getElementById('a22').value;
+  const b1=+document.getElementById('b1').value;
+  const b2=+document.getElementById('b2').value;
+
+  const x=[...Array(41).keys()].map(i=>i-20);
+  const y1=x.map(v=>(b1-a11*v)/a12);
+  const y2=x.map(v=>(b2-a21*v)/a22);
+
+  const traces=[
+    {x,y:y1,mode:'lines',name:'Рівняння 1'},
+    {x,y:y2,mode:'lines',name:'Рівняння 2'}
+  ];
+
+  if(lastSolution2D){
+    traces.push({
+      x:[lastSolution2D[0]],
+      y:[lastSolution2D[1]],
+      mode:'markers',
+      marker:{color:'yellow',size:12},
+      name:'Розв\'язок'
+    });
+  }
+
+  Plotly.newPlot('plot',traces,{margin:{t:0}});
+}
+
+// 3×3
+function gaussianEliminationSteps3(matrix) {
+  const steps = [];
+  const n = matrix.length;
+
+  for (let i=0;i<n;i++){
+    let maxRow=i;
+    for(let k=i+1;k<n;k++){
+      if(Math.abs(matrix[k][i])>Math.abs(matrix[maxRow][i])) maxRow=k;
+    }
+    [matrix[i],matrix[maxRow]]=[matrix[maxRow],matrix[i]];
+    steps.push(`Переставили рядки ${i+1} і ${maxRow+1}: ${formatMatrix(matrix)}`);
+
+    let pivot=matrix[i][i];
+    if(Math.abs(pivot)<1e-10) return {error:"Система не має єдиного розв'язку"};
+
+    for(let j=i;j<=n;j++) matrix[i][j]/=pivot;
+    steps.push(`Поділили рядок ${i+1} на ${pivot.toFixed(2)}: ${formatMatrix(matrix)}`);
+
+    for(let k=i+1;k<n;k++){
+      let factor=matrix[k][i];
+      for(let j=i;j<=n;j++) matrix[k][j]-=factor*matrix[i][j];
+      steps.push(`Відняли ${factor.toFixed(2)}*R${i+1} від R${k+1}: ${formatMatrix(matrix)}`);
+    }
+  }
+
+  const solution=new Array(n);
+  for(let i=n-1;i>=0;i--){
+    solution[i]=matrix[i][n];
+    for(let j=i+1;j<n;j++) solution[i]-=matrix[i][j]*solution[j];
+  }
+  steps.push(`Зворотній хід → x = ${solution.map(x=>x.toFixed(2))}`);
+  return {solution,steps};
+}
+
+function solveSystem3(){
+  const a11=+document.getElementById('a11_3').value;
+  const a12=+document.getElementById('a12_3').value;
+  const a13=+document.getElementById('a13_3').value;
+  const b1=+document.getElementById('b1_3').value;
+
+  const a21=+document.getElementById('a21_3').value;
+  const a22=+document.getElementById('a22_3').value;
+  const a23=+document.getElementById('a23_3').value;
+  const b2=+document.getElementById('b2_3').value;
+
+  const a31=+document.getElementById('a31_3').value;
+  const a32=+document.getElementById('a32_3').value;
+  const a33=+document.getElementById('a33_3').value;
+  const b3=+document.getElementById('b3_3').value;
+
+  const result=gaussianEliminationSteps3([[a11,a12,a13,b1],[a21,a22,a23,b2],[a31,a32,a33,b3]]);
+  const out=document.getElementById('solution-display-3');
+  const stepsDiv=document.getElementById('steps-display-3');
+
+  if(result.error){
+    out.innerHTML=`<p style="color:red">${result.error}</p>`;
+    stepsDiv.innerHTML='';
+    Plotly.purge('plot3d');
+    lastSolution3D=null;
+  } else {
+    const [x0,y0,z0]=result.solution;
+    out.innerHTML=`<p><b>Розв'язок:</b> x=${x0.toFixed(2)}, y=${y0.toFixed(2)}, z=${z0.toFixed(2)}</p>`;
+    stepsDiv.innerHTML=`<h4>Покрокове розв'язання:</h4>`+
+      result.steps.map(s=>`<div>${s}</div>`).join('');
+    lastSolution3D=result.solution;
+    lastCoefficients3D={a11,a12,a13,b1,a21,a22,a23,b2,a31,a32,a33,b3};
+  }
+}
+
+function visualize3D(){
+  if(!lastSolution3D || !lastCoefficients3D){
+    alert("Спочатку розв'яжіть систему 3×3");
+    return;
+  }
+  const {a11,a12,a13,b1,a21,a22,a23,b2,a31,a32,a33,b3}=lastCoefficients3D;
+  const [x0,y0,z0]=lastSolution3D;
+
+  const x = [...Array(20).keys()].map(i=>i-10);
+  const y = [...Array(20).keys()].map(i=>i-10);
+
+  function plane(a,b,c,d){
+    const z=[];
+    for(let i=0;i<x.length;i++){
+      const row=[];
+      for(let j=0;j<y.length;j++){
+        if(Math.abs(c)>1e-10){
+          row.push((d-a*x[i]-b*y[j])/c);
+        } else {
+          row.push(null);
+        }
+      }
+      z.push(row);
+    }
+    return z;
+  }
+
+  const z1=plane(a11,a12,a13,b1);
+  const z2=plane(a21,a22,a23,b2);
+  const z3=plane(a31,a32,a33,b3);
+
+  const data=[
+    {type:'surface',x,y,z:z1,opacity:0.6,name:'Площина 1'},
+    {type:'surface',x,y,z:z2,opacity:0.6,name:'Площина 2'},
+    {type:'surface',x,y,z:z3,opacity:0.6,name:'Площина 3'},
+    {type:'scatter3d',x:[x0],y:[y0],z:[z0],mode:'markers',
+     marker:{color:'yellow',size:6},name:'Розв\'язок'}
+  ];
+  Plotly.newPlot('plot3d',data,{margin:{l:0,r:0,b:0,t:0}});
+}
+</script>
 </body>
 </html>
